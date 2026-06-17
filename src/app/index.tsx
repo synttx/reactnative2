@@ -1,289 +1,265 @@
 import React, { useState } from 'react';
 import {
   StyleSheet,
+  Text,
   TextInput,
   Pressable,
-  Image,
   View,
   ScrollView,
   SafeAreaView,
 } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+
+interface HeaderProps {
+  text: string;
+  color: string;
+}
+
+function DynamicHeader({ text, color }: HeaderProps) {
+  return (
+    <Text style={[styles.headerText, { color }]}>
+      {text}
+    </Text>
+  );
+}
+
+interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+interface TodoListProps {
+  tasks: Task[];
+  onToggleTask: (id: string) => void;
+}
+
+function TodoList({ tasks, onToggleTask }: TodoListProps) {
+  return (
+    <View style={styles.todoList}>
+      {tasks.map((task) => (
+        <Pressable
+          key={task.id}
+          onPress={() => onToggleTask(task.id)}
+          style={[
+            styles.todoItem,
+            task.completed && styles.todoItemCompleted,
+          ]}>
+          <Text
+            style={[
+              styles.todoText,
+              task.completed && styles.todoTextCompleted,
+            ]}>
+            {task.completed ? '✓ ' : '○ '}
+            {task.text}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+interface ThemeContainerProps {
+  bgColor: string;
+  children: React.ReactNode;
+}
+
+function ThemeContainer({ bgColor, children }: ThemeContainerProps) {
+  return (
+    <View style={[styles.themeContainer, { backgroundColor: bgColor }]}>
+      {children}
+    </View>
+  );
+}
 
 export default function HomeScreen() {
-  const theme = useTheme();
-  const [activeTab, setActiveTab] = useState<'calc' | 'image' | 'counter'>('calc');
+  const [headerText, setHeaderText] = useState('Привіт, React Native!');
+  const [headerColor, setHeaderColor] = useState('#007AFF');
 
-  const [num1, setNum1] = useState('');
-  const [num2, setNum2] = useState('');
-  const [sum, setSum] = useState<number | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', text: 'Вивчити основи JSX', completed: true },
+    { id: '2', text: 'Створити власні компоненти', completed: false },
+    { id: '3', text: 'Налаштувати пропси та стан', completed: false },
+  ]);
 
-  const [isSecondImage, setIsSecondImage] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const [count, setCount] = useState(0);
-
-  const calculateSum = () => {
-    const val1 = parseFloat(num1);
-    const val2 = parseFloat(num2);
-    if (!isNaN(val1) && !isNaN(val2)) {
-      setSum(val1 + val2);
-    } else {
-      setSum(null);
-    }
+  const toggleTask = (id: string) => {
+    setTasks(
+      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+    );
   };
 
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="subtitle" style={styles.headerTitle}>
-            React Native Apps
-          </ThemedText>
-        </ThemedView>
+  const colors = [
+    { name: 'Синій', value: '#007AFF' },
+    { name: 'Зелений', value: '#34C759' },
+    { name: 'Червоний', value: '#FF3B30' },
+    { name: 'Помаранчевий', value: '#FF9500' },
+  ];
 
-        <View style={styles.tabBar}>
-          {(['calc', 'image', 'counter'] as const).map((tab) => (
-            <Pressable
-              key={tab}
-              onPress={() => setActiveTab(tab)}
-              style={[
-                styles.tabButton,
-                activeTab === tab && { backgroundColor: theme.backgroundSelected },
-              ]}>
-              <ThemedText
-                type="smallBold"
+  const themeBgColor = isDarkMode ? '#1C1C1E' : '#FFFFFF';
+  const themeTextColor = isDarkMode ? '#FFFFFF' : '#000000';
+  const cardBgColor = isDarkMode ? '#2C2C2E' : '#F2F2F7';
+
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: themeBgColor }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        
+        <View style={[styles.card, { backgroundColor: cardBgColor }]}>
+          <Text style={[styles.sectionTitle, { color: themeTextColor }]}>
+            1. Динамічний заголовок
+          </Text>
+          <DynamicHeader text={headerText} color={headerColor} />
+          
+          <TextInput
+            style={[
+              styles.input,
+              {
+                color: themeTextColor,
+                borderColor: isDarkMode ? '#3A3A3C' : '#E5E5EA',
+                backgroundColor: themeBgColor,
+              },
+            ]}
+            value={headerText}
+            onChangeText={setHeaderText}
+            placeholder="Введіть текст заголовка"
+            placeholderTextColor="#8E8E93"
+          />
+
+          <View style={styles.colorRow}>
+            {colors.map((c) => (
+              <Pressable
+                key={c.value}
+                onPress={() => setHeaderColor(c.value)}
                 style={[
-                  styles.tabLabel,
-                  activeTab === tab && { color: theme.text },
+                  styles.colorButton,
+                  { backgroundColor: c.value },
+                  headerColor === c.value && styles.colorButtonActive,
                 ]}>
-                {tab === 'calc' ? 'Калькулятор' : tab === 'image' ? 'Зміна фото' : 'Лічильник'}
-              </ThemedText>
-            </Pressable>
-          ))}
+                <Text style={styles.colorButtonText}>{c.name}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {activeTab === 'calc' && (
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="subtitle" style={styles.cardTitle}>
-                Калькулятор
-              </ThemedText>
+        <View style={[styles.card, { backgroundColor: cardBgColor }]}>
+          <Text style={[styles.sectionTitle, { color: themeTextColor }]}>
+            2. Список завдань (Props & State)
+          </Text>
+          <TodoList tasks={tasks} onToggleTask={toggleTask} />
+        </View>
 
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: theme.text,
-                    borderColor: theme.backgroundSelected,
-                    backgroundColor: theme.background,
-                  },
-                ]}
-                placeholder="Введіть перше число"
-                placeholderTextColor={theme.textSecondary}
-                keyboardType="numeric"
-                value={num1}
-                onChangeText={setNum1}
-              />
+        <View style={[styles.card, { backgroundColor: cardBgColor }]}>
+          <Text style={[styles.sectionTitle, { color: themeTextColor }]}>
+            3. Перемикач теми
+          </Text>
+          
+          <ThemeContainer bgColor={isDarkMode ? '#000000' : '#E5E5EA'}>
+            <Text style={{ color: isDarkMode ? '#FFFFFF' : '#000000', marginBottom: Spacing.two }}>
+              Цей блок змінює свій фон
+            </Text>
+            <Pressable
+              onPress={() => setIsDarkMode(!isDarkMode)}
+              style={({ pressed }) => [
+                styles.button,
+                { backgroundColor: isDarkMode ? '#FFFFFF' : '#000000' },
+                pressed && { opacity: 0.8 },
+              ]}>
+              <Text style={[styles.buttonText, { color: isDarkMode ? '#000000' : '#FFFFFF' }]}>
+                Увімкнути {isDarkMode ? 'світлу' : 'темну'} тему
+              </Text>
+            </Pressable>
+          </ThemeContainer>
+        </View>
 
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: theme.text,
-                    borderColor: theme.backgroundSelected,
-                    backgroundColor: theme.background,
-                  },
-                ]}
-                placeholder="Введіть друге число"
-                placeholderTextColor={theme.textSecondary}
-                keyboardType="numeric"
-                value={num2}
-                onChangeText={setNum2}
-              />
-
-              <Pressable
-                onPress={calculateSum}
-                style={({ pressed }) => [
-                  styles.button,
-                  { backgroundColor: '#007AFF' },
-                  pressed && { opacity: 0.8 },
-                ]}>
-                <ThemedText style={styles.buttonText}>
-                  Обчислити суму
-                </ThemedText>
-              </Pressable>
-
-              {sum !== null && (
-                <ThemedView style={styles.resultContainer}>
-                  <ThemedText type="default">
-                    Результат: <ThemedText type="subtitle">{sum}</ThemedText>
-                  </ThemedText>
-                </ThemedView>
-              )}
-            </ThemedView>
-          )}
-
-          {activeTab === 'image' && (
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="subtitle" style={styles.cardTitle}>
-                Зміна зображення
-              </ThemedText>
-
-              <Pressable onPress={() => setIsSecondImage(!isSecondImage)}>
-                <Image
-                  source={{
-                    uri: isSecondImage
-                      ? 'https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?q=80&w=600&auto=format&fit=crop'
-                      : 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop',
-                  }}
-                  style={styles.image}
-                />
-              </Pressable>
-
-              <ThemedText type="small" style={styles.imageHint}>
-                Натисніть на зображення, щоб змінити його
-              </ThemedText>
-            </ThemedView>
-          )}
-
-          {activeTab === 'counter' && (
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="subtitle" style={styles.cardTitle}>
-                Лічильник натискань
-              </ThemedText>
-
-              <ThemedView style={styles.counterDisplay}>
-                <ThemedText type="title">
-                  {count}
-                </ThemedText>
-              </ThemedView>
-
-              <View style={styles.counterButtons}>
-                <Pressable
-                  onPress={() => setCount(count + 1)}
-                  style={({ pressed }) => [
-                    styles.button,
-                    { backgroundColor: '#34C759', flex: 1 },
-                    pressed && { opacity: 0.8 },
-                  ]}>
-                  <ThemedText style={styles.buttonText}>
-                    Натисни мене
-                  </ThemedText>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setCount(0)}
-                  style={({ pressed }) => [
-                    styles.button,
-                    { backgroundColor: '#FF3B30', flex: 1 },
-                    pressed && { opacity: 0.8 },
-                  ]}>
-                  <ThemedText style={styles.buttonText}>
-                    Скинути
-                  </ThemedText>
-                </Pressable>
-              </View>
-            </ThemedView>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   safeArea: {
     flex: 1,
   },
-  header: {
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontWeight: '700',
-  },
-  tabBar: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.two,
-    marginBottom: Spacing.three,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabLabel: {
-    color: '#888',
-  },
   scrollContent: {
-    paddingHorizontal: Spacing.four,
-    paddingBottom: Spacing.five,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.four,
+    gap: Spacing.four,
   },
   card: {
-    borderRadius: Spacing.four,
-    padding: Spacing.four,
-    alignItems: 'center',
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
     gap: Spacing.three,
   },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    alignSelf: 'flex-start',
-    marginBottom: Spacing.two,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    opacity: 0.8,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: Spacing.one,
   },
   input: {
-    width: '100%',
-    height: 50,
+    height: 44,
     borderWidth: 1,
     borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.two,
     fontSize: 16,
   },
-  button: {
-    width: '100%',
-    height: 50,
+  colorRow: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+  },
+  colorButton: {
+    flex: 1,
+    height: 36,
     borderRadius: Spacing.two,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+  colorButtonActive: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  colorButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  todoList: {
+    gap: Spacing.two,
+  },
+  todoItem: {
+    padding: Spacing.two,
+    borderRadius: Spacing.two,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  todoItemCompleted: {
+    opacity: 0.6,
+  },
+  todoText: {
     fontSize: 16,
   },
-  resultContainer: {
-    marginTop: Spacing.two,
-    alignItems: 'center',
+  todoTextCompleted: {
+    textDecorationLine: 'line-through',
   },
-  image: {
-    width: 250,
-    height: 250,
-    borderRadius: Spacing.three,
-    backgroundColor: '#eee',
-  },
-  imageHint: {
-    color: '#888',
-    marginTop: Spacing.one,
-  },
-  counterDisplay: {
-    paddingVertical: Spacing.four,
+  themeContainer: {
+    padding: Spacing.three,
+    borderRadius: Spacing.two,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 120,
   },
-  counterButtons: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-    width: '100%',
+  button: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.two,
+  },
+  buttonText: {
+    fontWeight: '600',
   },
 });
